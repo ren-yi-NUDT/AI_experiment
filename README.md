@@ -1,7 +1,7 @@
 # CS188 Pacman Project 1: Search — 作业指引
 
 本目录用于完成 UC Berkeley **CS188 (fa25) Project 1: Search in Pacman**。
-官方项目页:<https://inst.eecs.berkeley.edu/~cs188/fa25/projects/proj1/>(本机已下载 **v1.004**)
+官方项目页:<https://inst.eecs.berkeley.edu/~cs188/fa25/projects/proj1/>
 
 ---
 
@@ -33,7 +33,6 @@ search/
 └── 其余 pacman/game/graphics*.py 等 ← 引擎与显示(不改)
 ```
 
-> ⚠️ fa25 版本与网上旧教程的差异:没有 `-q StayEast/StayWest` 评分参数;内置 agent 只有 `LeftTurnAgent`、`GreedyAgent`(以及各题的 `SearchAgent` 系列)。
 
 ## 3. 评分构成与完成位置一览
 
