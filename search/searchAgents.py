@@ -474,10 +474,72 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    '''
+    最小生成树方法莫名其妙挂了, 多好的启发式函数居然不符合连续性。。但是明明在
+    python3 pacman.py -l trickySearch -p AStarFoodSearchAgent 
+    里是可以正常跑完的
+    '''
 
+    # 失败版本
+    # position, foodGrid = state
+    # foods = foodGrid.asList()
+
+    # if not foods:
+    #     return 0
+
+    # nodes = [position] + foods
+    # heuristic = 0
+    # inTree = {position}
+    # while len(inTree) < len(nodes):
+    #     dis, nearest = min(
+    #         (util.manhattanDistance(treeNode, node), node)
+    #         for treeNode in inTree
+    #         for node in nodes
+    #         if node not in inTree
+    #                        )
+    #     heuristic += dis
+    #     inTree.add(nearest)
+    # return heuristic
+
+    position, foodGrid = state
+    foods = foodGrid.asList()
+    if len(foods) == 0:
+        return 0
+
+    if 'distanceTables' not in problem.heuristicInfo:
+        distanceTables = {}
+        for food in foods:
+            distances = {}
+            distances[food] = 0
+            queue = util.Queue()
+            queue.push(food)
+            while not queue.isEmpty():
+                current = queue.pop()
+                x, y = current
+                for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    neighbor = (x + dx, y + dy)
+                    alreadySeen = neighbor in distances
+                    hitWall = problem.walls[neighbor[0]][neighbor[1]]
+                    if not alreadySeen and not hitWall:
+                        distances[neighbor] = distances[current] + 1
+                        queue.push(neighbor)
+            distanceTables[food] = distances
+        problem.heuristicInfo['distanceTables'] = distanceTables
+    distanceTables = problem.heuristicInfo['distanceTables']
+
+    farthest = 0
+    for food in foods:
+        d = distanceTables[food][position]
+        if d > farthest:
+            farthest = d
+    return farthest
+
+        
+    
+    
+
+    
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):
@@ -507,7 +569,8 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+        return search.bfs(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -543,7 +606,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+        return self.food[x][y]
 
 def mazeDistance(point1: Tuple[int, int], point2: Tuple[int, int], gameState: pacman.GameState) -> int:
     """
