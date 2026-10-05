@@ -296,14 +296,18 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+        visitedC = tuple(c == self.startingPosition for c in self.corners)
+        return (self.startingPosition, visitedC)
 
     def isGoalState(self, state: Any):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+        position, visitedC = state
+        return all(visitedC)
 
     def getSuccessors(self, state: Any):
         """
@@ -326,6 +330,14 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            x, y = state[0]
+            dx, dy = Actions.directionToVector(action)
+            nxtx = int(x + dx)
+            nxty = int(y + dy)
+            if not self.walls[nxtx][nxty]:
+                nextPosition = (nxtx, nxty)
+                nextVisted = tuple(visited or corner == nextPosition for corner, visited in zip(self.corners, state[1]))
+                successors.append(((nextPosition, nextVisted), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -361,7 +373,16 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    position, visitedCorners = state
+    unvisited = [corner for corner, visited in zip(corners, visitedCorners) if not visited]
+    heuristic = 0
+    current = position
+    while unvisited:
+        dis, nearest = min((util.manhattanDistance(current, corner), corner) for corner in unvisited)
+        heuristic += dis
+        current = nearest
+        unvisited.remove(nearest)
+    return heuristic 
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"

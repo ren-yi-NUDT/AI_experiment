@@ -128,7 +128,22 @@ def breadthFirstSearch(problem: SearchProblem):
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    frontier.push((problem.getStartState(), [] ,0), 0)
+    explored = set()
+
+    while not frontier.isEmpty():
+        state, actions, cost = frontier.pop()
+        if problem.isGoalState(state):
+            return actions
+        if state not in explored:
+            explored.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):  # iCare
+                newCost = cost + stepCost
+                frontier.push((successor, actions + [action], newCost), newCost)
+    return []
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -140,7 +155,21 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    frontier.push((problem.getStartState(), [] ,0), 0)
+    explored = set()
+
+    while not frontier.isEmpty():
+        state, actions, cost = frontier.pop()
+        if problem.isGoalState(state):
+            return actions
+        if state not in explored:
+            explored.add(state)
+            for successor, action, stepCost in problem.getSuccessors(state):  # iCare
+                newCost = cost + stepCost
+                frontier.push((successor, actions + [action], newCost), newCost + heuristic(successor, problem))
+    return []
 
 
 # Abbreviations
