@@ -162,6 +162,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 successor = state.generateSuccessor(agentIndex, action)
                 scores.append(value(successor, nextAgent, nextDepth))
             return max(scores) if agentIndex == 0 else min(scores)
+        
         bestAction, bestValue = None, -10000.0
         for action in gameState.getLegalActions():
             v = value(gameState.generateSuccessor(0, action), 1 % numAgents, self.depth)
@@ -181,7 +182,43 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # util.raiseNotDefined()
+        numAgents = gameState.getNumAgents()
+
+        def value(state, agentIndex, depth, alpha, beta):
+            if state.isWin() or state.isLose() or depth == 0:
+                return self.evaluationFunction(state)
+            nextAgent = (agentIndex + 1) % numAgents
+            nextDepth = depth - 1 if nextAgent == 0 else depth
+
+            if agentIndex == 0:
+                v = -10000.0
+                for action in state.getLegalActions(agentIndex):
+                    successor = state.generateSuccessor(agentIndex, action)
+                    v = max(v, value(successor, nextAgent, nextDepth, alpha, beta))
+                    if v > beta:
+                        return v
+                    alpha = max(alpha, v)
+                return v 
+            else:
+                v = 10000.0
+                for action in state.getLegalActions(agentIndex):
+                    successor = state.generateSuccessor(agentIndex, action)
+                    v = min(v, value(successor, nextAgent, nextDepth, alpha, beta))
+                    if v < alpha:
+                        return v
+                    beta = min(beta, v)
+                return v
+
+
+        bestAction, bestValue = None, -10000.0
+        alpha, beta = -10000.0, 10000.0
+        for action in gameState.getLegalActions():
+            v = value(gameState.generateSuccessor(0, action), 1 % numAgents, self.depth, alpha, beta)
+            if v > bestValue:
+                bestValue, bestAction = v, action
+            alpha = max(alpha, bestValue)
+        return bestAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
