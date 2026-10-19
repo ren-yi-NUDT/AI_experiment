@@ -266,9 +266,10 @@ def betterEvaluationFunction(currentGameState: GameState):
     "*** YOUR CODE HERE ***"
     # util.raiseNotDefined()
     if currentGameState.isWin():
-        return 10000.0
+        return 10000.0 + currentGameState.getScore()
+    
     if currentGameState.isLose():
-        return -10000.0
+        return -10000.0 + currentGameState.getScore()
 
     pos = currentGameState.getPacmanPosition()
     foodList = currentGameState.getFood().asList()
@@ -279,7 +280,11 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     if foodList:
         closetFoodDist = min(manhattanDistance(pos, food) for food in foodList)
-        score += 1.0 / (closetFoodDist + 1)
+        # score += 1.0 / (closetFoodDist + 1)
+        if len(foodList) <= 3:
+            score -= 2.0 * closetFoodDist
+        else:
+            score += 1.0 / (closetFoodDist + 1)
     score -= 4.0 * len(foodList)
     score -= 20.0 * len(capsuleList)
 
