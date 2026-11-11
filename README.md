@@ -1,10 +1,11 @@
-# CS188 Pacman Project 2: Multi-Agent Pacman — 作业指引
+# CS188 Project 5: Machine Learning — 作业指引
 
-本目录用于完成 UC Berkeley **CS188 Project 2: Multi-Agent Pacman**（多智能体对抗搜索）。
-官方项目页:<https://inst.eecs.berkeley.edu/~cs188/archive/fa25/projects/proj2/>
+本目录用于完成 UC Berkeley **CS188 Project 5: Machine Learning**（机器学习）。
+官方项目页:<https://inst.eecs.berkeley.edu/~cs188/fa25/projects/proj5/>
 
-一句话概括：给 Pacman 装上"会思考的脑子"——**Reflex Agent（反射式）→ Minimax（极小极大）→ Alpha-Beta（剪枝加速）→ 评估函数**，
-让吃豆人在有幽灵追杀的棋盘上做出理性决策。
+一句话概括：给模型装上"会学习"的脑子——**感知机 → 全连接神经网络 → 卷积神经网络**，
+依次拿下二分类、`sin(x)` 非线性回归、MNIST 手写数字识别（≥97%）和简化版 MNIST 卷积分类（≥80%）四关。
+这是 CS188 系列里唯一不碰 `pacman.py` 的项目——这次的主角是 **PyTorch**。
 
 ---
 
@@ -12,257 +13,212 @@
 
 | 项目 | 状态 |
 |---|---|
-| Python | 3.12.3,**命令为 `python3`**(系统没有 `python` 别名) |
-| tkinter | ✅ 已安装(8.6),图形界面依赖已满足 |
-| 图形窗口 | 服务器 `DISPLAY` 为空(无 X 服务)。直接跑 `python3 pacman.py` 会报 `no display name`。**三种解决办法**:① 在自己桌面机跑;② `ssh -X` 转发;③ 一律加 `-t` 用文本模式(推荐,做作业完全够用) |
-| 代码位置 | `multiagent/` 子目录,**所有命令都在该目录下执行** |
+| 环境管理 | conda（Miniconda 26.9.4，装在 `~/miniconda3`），专用环境名 **`cs188`** |
+| Python | 3.12.16（conda-forge 频道装包，无 Anaconda ToS 限制） |
+| PyTorch | 2.15.0+**cpu**（官方推荐 CPU 版） |
+| numpy / matplotlib | 2.5.4 / 3.11.2 |
+| 图形窗口 | 服务器无 X 服务。**autograder 一律加 `--no-graphics`**；`--check-dependencies` 本应弹出的画图窗口在服务器上会静默通过（exit 0），**不是出错** |
+| 代码位置 | `machinelearning/` 子目录，**所有命令在该目录下、且激活 `cs188` 环境后执行** |
 
 ```bash
-cd /home/ren/Code/AI_experiments/experiment2/multiagent
+conda activate cs188
+cd /home/ren/Code/AI_experiments/experiment3/machinelearning
+python autograder.py --check-dependencies   # 依赖自检
 ```
 
-## 2. 目录结构(只需关心加粗的**一个**文件)
+> 官方文档提过"numpy 报错就降到 <2.0"。当前 torch 2.15 + numpy 2.5 组合已实测通过依赖检查和 q1 全流程，真报错时再降级即可。
 
-```
-multiagent/
-├── multiAgents.py       ← ★ 唯一要写的文件:全部 5 个 agent / 评估函数都在这里
-├── pacman.py            ← 游戏引擎;定义 GameState(你会大量用到)
-├── game.py              ← 世界规则与基础类型:AgentState / Direction / Grid
-├── util.py              ← 工具:manhattanDistance、PriorityQueue、lookup 等
-├── ghostAgents.py       ← 幽灵策略:RandomGhost / DirectionalGhost
-├── layout.py + layouts/ ← 地图读取与 .lay 地图文件
-├── autograder.py        ← 自动评测器(只跑,不改)
-├── multiagentTestClasses.py / testClasses.py / testParser.py / grading.py  ← 评测内部逻辑
-├── test_cases/          ← 各题测试用例(q1–q5)
-└── 其余 graphics*/textDisplay/keyboardAgents 等 ← 引擎与显示(不改)
+**数据集说明**：`data/mnist.npz`（18 MB）因体积未入 git（`.gitignore` 已忽略），`lang_id.npz`（137 KB）已入库。
+克隆到新机器后若报找不到 MNIST 数据，重新从官方 zip 解出即可：
+
+```bash
+curl -L -o /tmp/ml.zip https://inst.eecs.berkeley.edu/~cs188/fa25/assets/projects/machinelearning.zip
+unzip -j -o /tmp/ml.zip 'machinelearning/data/mnist.npz' -d machinelearning/data/
 ```
 
-> **只改 `multiAgents.py` 这一个文件。**项目页明确要求：不要改动发行包里的其它文件，也不要从 Project 1 拷代码过来（跨项目混用文件会导致评测失败）。
+## 2. 目录结构（只需关心加粗的三个文件）
+
+```
+machinelearning/
+├── models.py     ← ★ 要写：PerceptronModel / RegressionModel / DigitClassificationModel
+│                    / LanguageIDModel / Convolve / DigitConvolutionalModel / Attention
+├── train.py      ← ★ 要写：train_perceptron / train_regression / train_digitclassifier / …
+├── losses.py     ← ★ 要写：regression_loss / digitclassifier_loss / …
+├── autograder.py ← 自动评测器（只跑，不改）
+├── backend.py    ← 各任务后端逻辑（数据加载、算验证集准确率等，不改）
+├── data/         ← mnist.npz（手写数字）、lang_id.npz（语言识别）
+├── gpt_model.py + chargpt.py  ← 官方 Q7 字符GPT（0分趣味题，平台不要求）
+└── VERSION       ← v2.0
+```
+
+> **只改 `models.py` / `train.py` / `losses.py` 三个文件。**官方要求：不要改其它文件，
+> **不要改任何函数/类名与签名**，否则 autograder 找不到入口直接判错。
 
 ## 3. 评分构成与完成位置一览
 
 **本课程平台（头歌）要求**：
 
-| 题号 | 内容 | 平台分值 | 要求 | 修改位置 |
+| 平台题号 | 内容 | 平台分值 | 官方题号 | 修改位置 |
 |---|---|---|---|---|
-| Q1 | Reflex Agent | 15 | 必做 | `multiAgents.py` → `ReflexAgent.evaluationFunction()` |
-| Q2 | Minimax | 40 | 必做 | `multiAgents.py` → `MinimaxAgent.getAction()` |
-| Q3 | Alpha-Beta Pruning | 40 | 必做 | `multiAgents.py` → `AlphaBetaAgent.getAction()` |
-| Q4 | Evaluation Function | 5 | 选做 | `multiAgents.py` → `betterEvaluationFunction()` |
+| Q1 | Neural Network Tips（感知机） | 25 | q1（5分） | `models.py` → `PerceptronModel`；`train.py` → `train_perceptron` |
+| Q2 | Non-linear Regression | 25 | q2（5分） | `models.py` → `RegressionModel`；`train.py` → `train_regression`；`losses.py` → `regression_loss` |
+| Q3 | Digit Classification | 40 | q3（5分） | `models.py` → `DigitClassificationModel`；`train.py` → `train_digitclassifier`；`losses.py` → `digitclassifier_loss` |
+| Q5 | CNN | 10 | q5（3分） | `models.py` → `Convolve` + `DigitConvolutionalModel`；`train.py` → `Train_DigitConvolution`；`losses.py` → `digitconvolution_Loss` |
 
-**官方 fa25 原始项目**（本地 autograder 按它计分，共 25 分，用于自测）：
+官方 fa25 原始项目还有 q4 语言识别（5分）、q6 Attention（2分）、q7 字符GPT（0分趣味题），**平台未要求，不做**。
 
-| 官方题号 | 内容 | 官方分值 | 本地命令 | 对应平台题号 |
-|---|---|---|---|---|
-| Q1 | Reflex Agent | 4 | `-q q1` | Q1 |
-| Q2 | Minimax | 5 | `-q q2` | Q2 |
-| Q3 | Alpha-Beta Pruning | 5 | `-q q3` | Q3 |
-| Q4 | Expectimax | 5 | `-q q4` | 平台未要求,**但见下** |
-| Q5 | Evaluation Function | 6 | `-q q5` | Q4(选做) |
+> ⚠️ **三处命名/脚手架陷阱（autograder 按名字反射查找，错了=0分）：**
+> 1. 卷积的训练函数是大写 **`Train_DigitConvolution`**（不是 `train_digitconvolution`）；
+> 2. 卷积的损失函数是大写 L 的 **`digitconvolution_Loss`**（不是 `…_loss`）；
+> 3. `train_perceptron` 里**已写好** `with no_grad():` 和 `DataLoader(dataset, batch_size=1, shuffle=True)` 脚手架，别删别改，在其下填代码。
 
-> ⚠️ **两处易混，务必记住：**
-> 1. **官方 Q5 = 平台 Q4**（评估函数）；官方 Q4 是 Expectimax。
-> 2. **官方的评估函数测试是拿 `ExpectimaxAgent` 当载具跑的**：`test_cases/q5/grade-agent.test` 里写的是
->    `agentName: "ExpectimaxAgent"` + `agentArgs: "evalFn=better"`。所以即使 Expectimax 不在平台清单上，
->    **也必须把它写了**，否则本地 `python3 autograder.py -q q5` 会因 `util.raiseNotDefined()` 直接报错、选做的 5 分无从验证。
->    因此 `multiAgents.py` 里 5 个位置全部要填。
+## 4. 预备知识：所有题共用的"训练五步"
 
-## 4. 逐题指引
+官方用线性回归示例给出的固定套路。除 Q1 感知机（手工更新、不用梯度）外，Q2/Q3/Q5 的训练循环都是这五步：
 
-`GameState`（定义在 `pacman.py`）是贯穿全项目的核心对象，常用接口先列在这里：
+```python
+optimizer = optim.Adam(model.parameters(), lr=lr)   # 循环外建一次
+for epoch in range(epochs):
+    for batch in DataLoader(dataset, batch_size=B):
+        x, label = batch['x'], batch['label']       # 每个 batch 固定长这样
+        optimizer.zero_grad()                        # ① 清梯度
+        predicted_y = model(x)                       # ② 前向
+        loss = loss_fn(predicted_y, label)           # ③ 算损失（regression_loss / digitclassifier_loss）
+        loss.backward()                              # ④ 反向传播
+        optimizer.step()                             # ⑤ 更新参数
+```
 
-| 调用 | 含义 |
+**import 红线**：`train.py` / `losses.py` 文件头注释原话 "Your code will not pass if the gradescope
+autograder detects any changed imports"——**只能用已 import 的东西，不要新增 import**：
+
+| 文件 | 已有可用 import |
 |---|---|
-| `state.getLegalActions(agentIndex)` | 该 agent 的合法动作列表；**agentIndex=0 是 Pacman，≥1 是幽灵** |
-| `state.generateSuccessor(agentIndex, action)` | 执行动作后的新 `GameState` |
-| `state.getNumAgents()` | 总 agent 数(Pacman + 幽灵数) |
-| `state.isWin()` / `state.isLose()` | 终局判定 |
-| `state.getScore()` | 当前分数(float) |
-| `state.getPacmanPosition()` | Pacman 坐标 `(x, y)` |
-| `state.getGhostStates()` / `getGhostPositions()` | 幽灵状态列表 / 坐标列表 |
-| `state.getFood()` → `.asList()` | 剩余豆子网格 / 坐标列表 |
-| `state.getNumFood()` / `state.getCapsules()` | 剩余豆子数 / 剩余能量豆坐标 |
-| `state.getWalls()` | 墙网格 |
+| `train.py` | `optim`、`tensor`、`no_grad`、`DataLoader`、`movedim` |
+| `losses.py` | `mse_loss`、`cross_entropy` |
+| `models.py` | `Parameter`、`Linear`、`Module`、`tensor`、`tensordot`、`ones`、`matmul`、`zeros`、`relu`、`softmax`、`movedim` |
 
-`AgentState`（`game.py`）代表某个 agent 的状态：`getPosition()`、`getDirection()`、`scaredTimer`（被惊吓剩余回合数）。
+## 5. 逐题指引
 
-### Q1 — ReflexAgent 评估函数(必做)
+### Q1 — 感知机（官方 q1，5分；平台 25 分）
 
-改 `ReflexAgent.evaluationFunction(self, currentGameState, action)`。
-调用它的 `getAction()` 已经写好了：对每个合法动作打分，取最高分（并列随机选），所以**你只要写"打分"这一段**。
+线性二分类器，数据保证线性可分，标签只有 `1` / `−1`。四处填写：
 
-- **重点：这一问评估的是"状态-动作对"(`state-action pair`)，后续 Q2–Q4 评估的是"状态"(`state`)。**别搞反。
-- 已经从 `successorGameState` 里取好了：`newPos`、`newFood`、`newGhostStates`、`newScaredTimes`。
-- 官方提示：**特征的倒数比特征本身好用**（比如"到食物距离的倒数"，越近分越高，且不会有量纲/截断问题）。
-- 必须**同时考虑食物和幽灵**：只追豆子会被吃，只躲幽灵会饿死。
-  - 食物项：到最近豆子距离的倒数（`newFood.asList()` 拿到所有豆子坐标，配 `util.manhattanDistance`）。
-  - 幽灵项：对每只幽灵，非惊吓态且贴脸 ⇒ 重罚（例如 `- 1/dist` 或距离小于阈值时给大负分）；`scaredTimer > 0` 时反过来给奖励（可以去吃它）。
-  - 兜底项：`successorGameState.getScore()`（吃豆加分、等待扣分），以及剩余豆子数的少量惩罚。
+- `PerceptronModel.__init__(dimensions)`：`self.w = Parameter(ones(dimensions))`。
+  **必须用 `Parameter` 包装**——autograder 靠它找权重，`Adam` 等优化器也只认它。
+- `forward(x)`：权重与输入的点积。x 是**单个**点（shape `(dimensions)`），
+  `tensordot(self.get_weights(), x, dims=1)` 返回一个标量分数。
+- `get_prediction(x)`：分数 **≥ 0 判 `1`，否则 `−1`**（starter 已把 `score = self(x)` 写好）。
+- `train_perceptron(model, dataset)`：经典感知机训练——遍历数据，遇到错分样本就
+  `w += label * x`（方向×幅度，幅度取 1）；**跑完一整轮零错分即收敛、停止训练**。
 
-**验收**：`python3 autograder.py -q q1 --no-graphics`
-官方在 `openClassic` 上跑 **10 局**（`RandomGhost`，固定随机种子 0），满分 4 分的分档：
+**验收**：
 
-| 档位 | 条件 | 分值 |
+```bash
+python autograder.py -q q1 --no-graphics
+```
+
+> 正确实现 30 秒内跑完；卡很久 = 有 bug（autograder 只给你有限次更新机会，不收敛 = 超时判错）。
+
+### Q2 — 非线性回归（官方 q2，5分；平台 25 分）
+
+用神经网络拟合 `[-2π, 2π]` 上的 `sin(x)`，**全数据集平均 MSE ≤ 0.02** 即满分。
+
+- `RegressionModel.__init__`：定义 Linear 层，如 `self.layer1 = Linear(1, h)`。
+  ⚠️ forward 的输入形状是 `(batch_size x 1)`，所以**第一层输入维度是 1**，不是 batch_size。
+- `forward(x)`：返回 `(batch_size x 1)` 的预测值。一层隐藏层通常够用（官方建议 h ∈ [100, 500]）；
+  **输出层不加激活**——sin 在负半轴有值，输出必须能取负。
+- `regression_loss(y_pred, y)`：`mse_loss` 一行即可。
+- `train_regression`：按 §4 训练五步写，自己建 `DataLoader`。
+  官方要求**数据集大小能被 batch size 整除**；建议 batch = 200，epoch 循环到训练损失 ≤ 0.02 就 break（留点余量更好）。
+
+**验收**：`python autograder.py -q q2 --no-graphics`（训练需几分钟，属正常）
+
+### Q3 — 手写数字分类（官方 q3，5分；平台 40 分，分值大头）
+
+MNIST：每张图 28×28 展平成 784 维向量（值在 0–1），输出 10 类得分。**测试集 ≥ 97% 才给分**。
+
+- `DigitClassificationModel.__init__`：starter 已给 `input_size = 28*28`、`output_size = 10`。
+- `forward(x)`：返回 `(batch_size x 10)` 得分（logits）。**最后一层不要加 ReLU**——损失用 cross_entropy，要原始分数。
+- `digitclassifier_loss`：`cross_entropy` 一行。⚠️ **最大的坑**：官方给的标签 y 是
+  **one-hot** `(batch x 10)`（backend.py 第 206–209 行实证），而 `cross_entropy` 要求 target 是**类别索引**
+  ——先 `y.argmax(dim=1)` 转换再传。
+- `train_digitclassifier`：训练五步（starter 已写好 `model.train()`），用
+  `dataset.get_validation_accuracy()` 决定何时停。**验证集到 97.5%–98% 再停**——
+  autograder 按测试集算，验证 97% ≈ 测试踩线，容易挂。
+
+**验收**：`python autograder.py -q q3 --no-graphics`（训练几分钟，参考实现约 5 个 epoch）
+
+### Q5 — 卷积神经网络（官方 q5，3分；平台 10 分）
+
+两件事：手写二维卷积 + 在**简化版 MNIST** 上训练 CNN（**≥ 80%**）。
+
+- `Convolve(input, weight)`：实现标准 2D 卷积，**不 padding**——输出尺寸 = 输入边长 − 核边长 + 1（每个维度都如此）。
+  输入保证比核大，且**一次只传一张**（batch 恒为 1，不用处理 batch 维）。
+  双重 for 循环逐窗口做逐元素乘再求和即可；autograder 会**先单测这个函数的正确性**，再测模型。
+- `DigitConvolutionalModel`：官方已把"卷积层 + 展平"写好（见 starter 里 forward 的注释），
+  你只需把展平后的向量接上少量小线性层——**大段复用 Q3 的代码**。
+- `train.py` → **`Train_DigitConvolution`**（大写 T）、`losses.py` → **`digitconvolution_Loss`**（大写 L）：
+  损失与训练循环同 Q3。
+- 你的手写卷积比 PyTorch 内置慢是预期内的（人家有 C++/CUDA 优化），官方特意给了简化数据集，不影响得分。
+
+**验收**：`python autograder.py -q q5 --no-graphics`
+
+## 6. 运行与评测命令汇总
+
+```bash
+conda activate cs188
+cd /home/ren/Code/AI_experiments/experiment3/machinelearning
+
+python autograder.py --check-dependencies   # 依赖自检
+python autograder.py -q q1 --no-graphics    # 单题；q1…q6
+python autograder.py --no-graphics          # 全部题目（官方满分 5+5+5+5+3+2=25）
+```
+
+参考耗时（staff 参考解）：q1 < 30 秒；q2/q3 各几分钟；q5 分钟级；**全套约 12 分钟**。
+你的实现显著慢于这个量级就该检查效率（最常见：print 刷屏、batch=1 跑 Q3、Convolve 写得太笨）。
+
+## 7. 调参速查（官方建议）
+
+| 超参 | 建议范围 | 说明 |
 |---|---|---|
-| 不超时 | 10 局全部不超时（`nonTimeoutMinimum: 10`，**任何一局超时/崩溃 → 本题直接 0 分**） | 必须 |
-| 胜场 | 至少赢 5 局 +1；赢满 10 局再 +1 | 0–2 |
-| 平均分 | >500 +1；>1000 再 +1 | 0–2 |
+| 隐藏层大小 | 100–500 | 太宽 → 训练慢、易过拟合 |
+| batch size | 1–128 | Q2/Q3 要求**数据集能被 batch 整除**；batch 越小，lr 越要小 |
+| 学习率 | 0.0001–0.01 | **最重要的超参**：NaN/Inf = 太大；loss 纹丝不动 = 太小 |
+| 隐藏层数 | 1–3 | **从浅开始**：先用一层找好 lr 和层宽，再考虑加深 |
 
-手动跑：
+经验法则：
+- 系统记录每次尝试的「架构 + 超参 + 结果」。参数随机初始化、数据乱序，**偶尔挂一次重跑就好**；**连挂两次**才值得换架构。
+- 损失函数选择：Q2 回归用 `mse_loss`；Q3/Q5 分类用 `cross_entropy`。
 
-```bash
-python3 pacman.py -p ReflexAgent -l testClassic -t          # 应能稳定通关
-python3 pacman.py --frameTime 0 -p ReflexAgent -k 1 -t      # mediumClassic 1 幽灵
-python3 pacman.py --frameTime 0 -p ReflexAgent -k 2 -t      # 2 幽灵，容易翻车
-```
+## 8. 提交打包（按平台要求）
 
-### Q2 — Minimax(必做，40 分)
-
-改 `MinimaxAgent.getAction(self, gameState)`，实现极小极大搜索。
-
-- 用 `self.depth` 与 `self.evaluationFunction`——**不要硬编码调用 `scoreEvaluationFunction`**，因为后面 Q4 会换评估函数（通过 `-a evalFn=better` 传入）。
-- **1 ply(一层) = Pacman 走一步 + 所有幽灵各走一步**，所以 `depth=2` 指 Pacman 和每只幽灵都动两次。
-- **多幽灵的树比课上讲的更宽**：每个 max 层下面有**与幽灵数相同个数**的 min 层（幽灵按 agentIndex 递增依次行动）。
-  典型写法是递归 `(agentIndex, depth)`：`agentIndex == self.index` 时是 max 层；
-  `agentIndex` 走到最后一只幽灵后，下一个 agent 就绕回 Pacman 并把 `depth - 1`。
-- 递归终止：`state.isWin()` / `isLose()` 或 `depth == 0` ⇒ 返回 `self.evaluationFunction(state)`。
-- **autograder 会严格比对 `GameState.generateSuccessor` 的调用次数**（以及展开出的状态集合与根动作是否与参考解一致），
-  调用多一次或少一次都会判错——所以**不要为了"提前判断胜负"而多调用**，也不要漏掉合法的子节点。
-
-**验收**：
-
-```bash
-python3 autograder.py -q q2 --no-graphics
-python3 pacman.py -p MinimaxAgent -l minimaxClassic -a depth=4 -t
-```
-
-- 官方给出 `minimaxClassic` 布局初始状态的 minimax 值：**depth 1/2/3/4 分别为 9 / 8 / 7 / -492**，可用来校验你的实现。
-- 若在 `trappedClassic` 上看到 Pacman 主动冲向最近的幽灵，那是**正确**行为：它认为必死，于是尽早结束以少扣"存活惩罚"。
-- `minimaxClassic` 上 depth 4 的移动通常很慢（几秒/步），属正常。
-
-### Q3 — Alpha-Beta Pruning(必做，40 分)
-
-新建逻辑写进 `AlphaBetaAgent.getAction(self, gameState)`：在 Minimax 基础上加 α-β 剪枝。
-
-- **剪枝后得到的 minimax 值与 Q2 完全相同**（选出的动作可能不同，因为并列时的打破顺序不同）。
-- 同样要**扩展到多幽灵**：多只幽灵时，α 要沿 min 链一路往上传（max 层只需把 `alpha` 更新后传给下一只幽灵）。
-- **两条硬性要求，违反就会和 autograder 的参考状态集对不上**：
-  1. **不得重排子节点**——必须严格按 `getLegalActions()` 返回的顺序展开。
-  2. **不得在相等时剪枝**——只允许严格不等号：
-     max 层 `if v > beta: return v`；min 层 `if v < alpha: return v`（写成 `>=` / `<=` 会剪掉参考解里应被展开的节点，典型对照用例是 `test_cases/q3/6-tied-root`）。
-- 目标：**depth 3 的 alpha-beta 大约和 depth 2 的 minimax 一样快**。
-
-**验收**：
-
-```bash
-python3 autograder.py -q q3 --no-graphics
-python3 pacman.py -p AlphaBetaAgent -a depth=3 -l smallClassic -t
-```
-
-### Q4 — Evaluation Function(选做，5 分)
-
-改 `betterEvaluationFunction(currentGameState)`，注意**它评估的是 state，不是 action**（跟 Q1 的评估函数不一样）。
-`multiAgents.py` 末尾已有别名 `better = betterEvaluationFunction`，所以命令行可以写 `-a evalFn=better`。
-
-- 用 depth 2 搜索 + 你的评估函数，应当在 `smallClassic`（1 只随机幽灵）上**超过一半的局数获胜**，且平均分在赢的时候接近 1000。
-- 可用的特征（示例，不限于此）：分数、到最近豆子的距离、剩余豆子数、胶囊位置与数量、与每只幽灵的距离、`scaredTimer` 剩余回合。
-  建议写成"线性加权"：分数 + 各项加权项；用**曼哈顿距离**（`util.manhattanDistance`）而不是欧氏距离。
-- 和 Q1 一样，**幽灵惊吓中（`scaredTimer` 大）应给奖励/让它去追；未被惊吓且贴脸时给重罚**。
-- 运行太慢会丢分（见下表），所以别写太笨重的特征（例如每次调用都跑一遍全图 BFS）。
-
-**验收**：`python3 autograder.py -q q5 --no-graphics`（**注意是官方 q5**）
-官方在 `smallClassic` 上跑 10 局，满分 6 分的分档：
-
-| 档位 | 条件 | 分值 |
-|---|---|---|
-| 不超时 | 10 局全部不超时（`nonTimeoutThresholds: 10`） | 0–1 |
-| 胜场 | 至少赢 1 局 +1；≥5 局再 +1；赢满 10 局再 +1 | 0–3 |
-| 平均分 | ≥500 +1；≥1000 再 +1 | 0–2 |
-
-同样地，**任一档低于其下限（`minimum`），本题直接 0 分**。
-
-### 附：Expectimax（官方 Q4，平台不要求，但 Q4 评估函数依赖它）
-
-改 `ExpectimaxAgent.getAction(self, gameState)`：树结构和 Minimax 完全一样，唯一区别是——
-**幽灵层不再取"最小值"（假设对手最优），而是对所有合法动作取"平均值"（假设对手均匀随机乱走）**：
-
-$$\text{value} = \frac{1}{|actions|}\sum_{a} \text{value}(successor)$$
-
-这样 Pacman 面对随机乱走的幽灵时会更大胆（敢于火中取栗多啃几颗豆），更符合 `RandomGhost` 的真实行为。
-
-**验收**：
-
-```bash
-python3 autograder.py -q q4 --no-graphics
-python3 pacman.py -p ExpectimaxAgent -l minimaxClassic -a depth=3 -t
-# 对照实验：trappedClassic 上 AlphaBeta 必败，Expectimax 大约能赢一半
-python3 pacman.py -p AlphaBetaAgent -l trappedClassic -a depth=3 -q -n 10
-python3 pacman.py -p ExpectimaxAgent -l trappedClassic -a depth=3 -q -n 10
-```
-
-## 5. 运行与评测命令汇总
-
-**自动评测**（在 `multiagent/` 目录下）：
-
-```bash
-python3 autograder.py --no-graphics          # 全部题目（满分基线 0/25）
-python3 autograder.py -q q1 --no-graphics    # 单题；q1…q5
-python3 autograder.py -t q2/0-small-tree --no-graphics   # 单个测试用例
-```
-
-> ⚠️ `autograder.py -t` 的 `-t` 是 **`--test`（跑单个测试）**；
-> 而 `pacman.py -t` 的 `-t` 是 **`--textGraphics`（文本模式）**。**同名不同义，别用混。**
-
-**手动跑游戏**：
-
-```bash
-python3 pacman.py -p ReflexAgent    -l testClassic    -t
-python3 pacman.py -p MinimaxAgent   -l minimaxClassic -a depth=4 -t
-python3 pacman.py -p AlphaBetaAgent -l smallClassic   -a depth=3 -t
-python3 pacman.py -p ExpectimaxAgent -a depth=3 -l smallClassic -t
-```
-
-**常用命令行参数**：
-
-| 参数 | 含义 |
-|---|---|
-| `-p AgentName` | 指定 Pacman 的策略类（本项目的四个 agent 名） |
-| `-l layout` | 指定布局，如 `testClassic` / `minimaxClassic` / `openClassic` / `smallClassic` |
-| `-a depth=3,evalFn=better` | 传参给 agent 构造函数 |
-| `-k N` | 幽灵数量 |
-| `-n N` | 连跑 N 局 |
-| `-q` | 安静文本模式（快速跑多局） |
-| `-t` | 文本模式（有逐帧文字输出） |
-| `-f` | 固定随机种子（便于复现同一局） |
-| `--frameTime 0` | 关闭逐帧延迟，跑得更快 |
-
-## 6. 提交打包(按平台要求)
-
-1. 只交 **1 个文件**：`multiAgents.py`（改了多少都只交这个，文件不能改名）。
-2. 建「**学号_姓名**」文件夹（**下划线**连接，如 `20220602_张三`），把该文件放进去，压缩 zip 上传头歌。
-3. 实验报告另存为「**学号_姓名_实验2**」单独提交。
+1. 平台要交的代码：`models.py`、`train.py`、`losses.py` 三个文件（不能改名）。
+2. 建「**学号_姓名**」文件夹（**下划线**连接，如 `20220602_张三`），把三个文件放进去，压缩 zip 上传头歌。
+3. 实验报告另存为「**学号_姓名_实验3**」单独提交。
 
 ```bash
 # 打包示例（替换成你的学号姓名）
-cd /home/ren/Code/AI_experiments/experiment2
-mkdir 20220000_你的名字 && cp multiagent/multiAgents.py 20220000_你的名字/
+cd /home/ren/Code/AI_experiments/experiment3
+mkdir 20220000_你的名字 && cp machinelearning/{models,train,losses}.py 20220000_你的名字/
 zip -r 20220000_你的名字.zip 20220000_你的名字
 ```
 
-> 交前自检：`cd multiagent && python3 autograder.py --no-graphics` 看各题得分；
-> 并确认 `multiAgents.py` 里**没有打印调试语句残留**（`print(...)` 在批量跑局时会刷屏且拖慢评测）。
+> 交前自检：`python autograder.py --no-graphics` 确认 q1/q2/q3/q5 四题得分；
+> 并确认三个文件里**没有 print 调试残留**——Q3 训练是几万个 batch 的循环，一个 print 就能把评测拖到超时。
 
-## 7. 常见坑
+## 9. 常见坑
 
-- **`python` 不存在** → 一律 `python3`。
-- **图形报 `no display name`** → 加 `-t`（文本模式）或 `--no-graphics`。
-- **`autograder.py` 的 `-t` 会报"找不到测试"** → 别把它和 `pacman.py -t` 记混：autograder 的 `-t` 后面要跟测试名，如 `-t q2/0-small-tree`。
-- **Q2/Q3 明明赢了却判错** → autograder 不看你赢没赢，看的是**展开状态集合 + 根动作**是否与参考一致。多半是：
-  - `generateSuccessor` 多调/漏调；
-  - 把"1 ply"理解成了 Pacman 走一步（忽略了幽灵也要算一层）；
-  - 叶子判定或 `depth` 递减的位置写错。
-- **Q3 值与 Q2 不一致 / 状态集合对不上** → 检查是否**重排了子节点**，或用了 `>=` / `<=` 做剪枝（必须严格不等号）。
-- **Q5（评估函数）报 `NotImplementedError` / 直接崩** → `ExpectimaxAgent.getAction` 还是 `util.raiseNotDefined()`，没写。它是评估函数测试的载具。
-- **Q1/Q4 得 0 分但看着"能跑"** → 平台/官方规则是**任一档低于下限则本题 0 分**；最常见的是**超时或崩溃**（例如评估函数太慢、递归深度过大）。
-- **Minimax 在 `minimaxClassic` 上极慢** → depth 4 的树很大，属正常；用 `-q` 跑多局或降 depth 调试。
-- **改了不该改的文件** → 评测只读 `multiAgents.py`，其余文件请保持原样以便对照。
+- **`ModuleNotFoundError: No module named 'torch'`** → 忘了 `conda activate cs188`。
+  `which python` 应指向 `~/miniconda3/envs/cs188/bin/python`。
+- **`no display name` / 弹窗失败** → 服务器无 X 服务，autograder 一律加 `--no-graphics`。
+- **gradescope 判过不了但本地看着对** → 检查是否**新增了 import**（官方检测 changed imports 直接判负，见 §4 红线）。
+- **cross_entropy 报维度错 / 得分怪异** → 标签是 one-hot，先 `y.argmax(dim=1)` 转类别索引（Q3/Q5 同理）。
+- **Tensor 布尔陷阱** → `if pred == label:` 单元素 Tensor 会抛 "Boolean value of Tensor is ambiguous"，
+  先 `.item()` 转成 Python 数再比较（Q1 感知机最容易踩）。
+- **Q2 拟合不出 sin 的负半轴** → 输出层（最后一层 Linear 之后）加了 ReLU。去掉，只在隐藏层间用。
+- **感知机不收敛 / 权重不更新** → 权重没包 `Parameter`；或 `no_grad()` 外面做了 `w.data` 之外的原地操作；
+  或收敛判定写成了"单轮无错就停"以外的条件（必须整轮零错分）。
+- **`mnist.npz` 找不到** → 数据集未入 git，按 §1 的命令重新下载。
+- **Convolve 输出尺寸不对** → 无 padding 时输出 = 输入 − 核 + 1，逐维检查；单测先过再训练模型。
+- **改了不该改的文件 / 函数名** → 评测只认 `models.py` / `train.py` / `losses.py` 里的原函数名，
+  大小写陷阱见 §3（`Train_DigitConvolution`、`digitconvolution_Loss`）。
