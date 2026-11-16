@@ -62,4 +62,5 @@ def digitconvolution_Loss(y_pred, y):
     Returns: a loss tensor
     """
     """ YOUR CODE HERE """
+    return cross_entropy(y_pred, y)
     
