@@ -78,6 +78,15 @@ def train_digitclassifier(model, dataset):
     """
     model.train()
     """ YOUR CODE HERE """
+    optimizer = optim.Adam(model.parameters(), lr = 1e-3)
+    dataloader = DataLoader(dataset, batch_size = 100, shuffle = True)
+    while dataset.get_validation_accuracy() < 0.98:
+        for batch in dataloader:
+            x, y = batch['x'], batch['label']
+            optimizer.zero_grad()
+            loss = digitclassifier_loss(model(x), y)
+            loss.backward()
+            optimizer.step()
 
 
 def train_languageid(model, dataset):

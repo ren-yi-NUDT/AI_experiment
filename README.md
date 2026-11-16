@@ -142,12 +142,14 @@ MNIST：每张图 28×28 展平成 784 维向量（值在 0–1），输出 10 �
 
 - `DigitClassificationModel.__init__`：starter 已给 `input_size = 28*28`、`output_size = 10`。
 - `forward(x)`：返回 `(batch_size x 10)` 得分（logits）。**最后一层不要加 ReLU**——损失用 cross_entropy，要原始分数。
-- `digitclassifier_loss`：`cross_entropy` 一行。⚠️ **最大的坑**：官方给的标签 y 是
-  **one-hot** `(batch x 10)`（backend.py 第 206–209 行实证），而 `cross_entropy` 要求 target 是**类别索引**
-  ——先 `y.argmax(dim=1)` 转换再传。
+- `digitclassifier_loss`：`return cross_entropy(y_pred, y)` 一行。⚠️ **最大的坑**：标签 y 是
+  **one-hot** `(batch x 10)`，**直接当 target 传给 `cross_entropy` 即可**（PyTorch 支持概率目标）。
+  ⚠️ **不要**按直觉先 `y.argmax(dim=1)`——argmax 不可导，会把标签从计算图切断，
+  autograder 的"loss 必须依赖 y"梯度检查（autograder.py:484）直接挂。
 - `train_digitclassifier`：训练五步（starter 已写好 `model.train()`），用
-  `dataset.get_validation_accuracy()` 决定何时停。**验证集到 97.5%–98% 再停**——
-  autograder 按测试集算，验证 97% ≈ 测试踩线，容易挂。
+  `dataset.get_validation_accuracy()` 决定何时停。**阈值设 0.98**——验证 0.975 时实测测试集只有
+  97.22%（验证/测试是同一测试集劈成的两半，天然有 ~0.3% 波动），踩线易挂；
+  阈值 0.98 实测 3 次训练测试集全部 ≥ 97.54%。
 
 **验收**：`python autograder.py -q q3 --no-graphics`（训练几分钟，参考实现约 5 个 epoch）
 
@@ -215,7 +217,8 @@ zip -r 20220000_你的名字.zip 20220000_你的名字
   `which python` 应指向 `~/miniconda3/envs/cs188/bin/python`。
 - **`no display name` / 弹窗失败** → 服务器无 X 服务，autograder 一律加 `--no-graphics`。
 - **gradescope 判过不了但本地看着对** → 检查是否**新增了 import**（官方检测 changed imports 直接判负，见 §4 红线）。
-- **cross_entropy 报维度错 / 得分怪异** → 标签是 one-hot，先 `y.argmax(dim=1)` 转类别索引（Q3/Q5 同理）。
+- **cross_entropy 报维度错 / 得分怪异** → 标签是 one-hot，**直接整张传给 `cross_entropy`**（概率目标形式）；
+  **别做 `argmax` 转换**——argmax 不可导会切断对 y 的梯度，过不了 autograder 的依赖检查（Q3/Q5 同理）。
 - **Tensor 布尔陷阱** → `if pred == label:` 单元素 Tensor 会抛 "Boolean value of Tensor is ambiguous"，
   先 `.item()` 转成 Python 数再比较（Q1 感知机最容易踩）。
 - **Q2 拟合不出 sin 的负半轴** → 输出层（最后一层 Linear 之后）加了 ReLU。去掉，只在隐藏层间用。
