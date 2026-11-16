@@ -11,7 +11,7 @@ def regression_loss(y_pred, y):
     Returns: a tensor of size 1 containing the loss
     """
     "*** YOUR CODE HERE ***"
-
+    return mse_loss(y_pred, y)
 
 
 def digitclassifier_loss(y_pred, y):
