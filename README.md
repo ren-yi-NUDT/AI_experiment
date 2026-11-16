@@ -103,13 +103,16 @@ autograder detects any changed imports"——**只能用已 import 的东西，�
 
 线性二分类器，数据保证线性可分，标签只有 `1` / `−1`。四处填写：
 
-- `PerceptronModel.__init__(dimensions)`：`self.w = Parameter(ones(dimensions))`。
-  **必须用 `Parameter` 包装**——autograder 靠它找权重，`Adam` 等优化器也只认它。
-- `forward(x)`：权重与输入的点积。x 是**单个**点（shape `(dimensions)`），
-  `tensordot(self.get_weights(), x, dims=1)` 返回一个标量分数。
+- `PerceptronModel.__init__(dimensions)`：`self.w = Parameter(ones((1, dimensions)))`。
+  **必须用 `Parameter` 包装**；且 autograder.py:303 明确要求权重 shape 为 **`(1, dimensions)`**（二维！
+  写成一维 `(dimensions,)` 形状检查直接挂）。初始化用 `ones` 而非随机值——权重更新一致性检查要求精确相等。
+- `forward(x)`：权重与输入的点积。x 带 batch 维（shape `(1, dimensions)`），
+  `tensordot(self.get_weights(), x, dims=([1], [1]))` 沿第 1 维收缩，返回单个分数（shape `(1,1)`）。
+  ⚠️ `dims=1` 的简写在这里**不行**（会把 w 的第 0 维对上 x 的第 0 维，维度不匹配报错）。
 - `get_prediction(x)`：分数 **≥ 0 判 `1`，否则 `−1`**（starter 已把 `score = self(x)` 写好）。
 - `train_perceptron(model, dataset)`：经典感知机训练——遍历数据，遇到错分样本就
-  `w += label * x`（方向×幅度，幅度取 1）；**跑完一整轮零错分即收敛、停止训练**。
+  `model.w += label * x`（方向×幅度，幅度取 1；**不能写 `model.get_weights() += …`，
+  对函数调用做增强赋值是 Python 语法错误**）；**跑完一整轮零错分即收敛、停止训练**。
 
 **验收**：
 
