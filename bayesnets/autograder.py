@@ -14,11 +14,26 @@
 
 # imports from python standard library
 import grading
-import imp
 import optparse
 import os
 import re
 import sys
+try:
+    import imp
+except ModuleNotFoundError:  # Python 3.12 起标准库移除 imp，用等价的 importlib 机制替代
+    import types
+    imp = types.ModuleType('imp')
+    imp.PY_SOURCE = 1
+    imp.new_module = lambda name: types.ModuleType(name)
+
+    def _load_module(moduleName, f, filename, stuff=None):
+        module = types.ModuleType(moduleName)
+        module.__file__ = filename
+        exec(compile(f.read(), filename, 'exec'), module.__dict__)
+        sys.modules[moduleName] = module
+        return module
+
+    imp.load_module = _load_module
 import projectParams
 import random
 random.seed(0)
