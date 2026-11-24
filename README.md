@@ -9,6 +9,7 @@
 
 > 本仓库是官方项目的精简版（`bayesnets/VERSION` 为 v4.000）：官方共 11 题，这里只保留平台要求的 Q1–Q4（`test_cases/` 下只有 q1–q4）。
 > 官方列出的先修内容中，与这四题相关的是：概率（Video 12, Note 6.1–6.2）、贝叶斯网络表示（Video 13, Note 6.3–6.4）、贝叶斯网络推断（Video 15, Note 6.6）。
+> 文中的 `文件:行号` 对应当前仓库里已完成的代码；在还没填写的 starter 上，`inference.py` 和 `factorOperations.py` 的行号会小几行到十几行。
 
 ---
 
@@ -85,13 +86,13 @@ experiment4/
 本地满分 2 + 3 + 2 + 2 = **9**。官方页面对这四题标注的分值是 2 / 4 / 3 / 2，与本地 `CONFIG`（2 / 3 / 2 / 2）略有出入，以本地 autograder 的输出为准。
 
 官方完整项目还有 Q5–Q11（观测概率、精确 / 近似推断跟踪、粒子滤波、Greedy Busters Agent 等），**平台未要求，不做**。
-`inference.py:411-434` 里 `InferenceModule` 的四个 `raise NotImplementedError` 属于那部分，不用填。
+`inference.py:425-448` 里 `InferenceModule` 的四个 `raise NotImplementedError` 属于那部分，不用填。
 
 > 四道题的 `CONFIG` 都是 `PassAllTestsQuestion`：**该题所有用例全过才得分，没有部分分。**
 
 > ⚠️ **autograder 按名字找入口，三处不能动：**
 > 1. 四个函数的名字和签名。autograder 按名字取函数（`bayesHMMTestClasses.py:47`、`:232`、`:271`）。
-> 2. Q4 里标着 `# this is for autograding -- don't modify` 的两行（`inference.py:176-178`）。autograder 靠它们记录 join / eliminate 的调用序列。
+> 2. Q4 里标着 `# this is for autograding -- don't modify` 的两行（`inference.py:182-184`）。autograder 靠它们记录 join / eliminate 的调用序列。
 > 3. 答案只能放在 `inference.py` 和 `factorOperations.py` 里。autograder 只加载这两个学生文件（`projectParams.py` 的 `STUDENT_CODE_DEFAULT`）。
 
 ---
@@ -140,7 +141,7 @@ Pacman → Observation1 ← Ghost1
 ```
 
 - 变量名必须用函数里给好的常量 `PAC` / `GHOST0` / `GHOST1` / `OBS0` / `OBS1`（`inference.py:50-54`）。
-- 边是 `(父, 子)` 元组，和变量、取值域一起交给 `bn.constructEmptyBayesNet(...)`（`inference.py:67`）。
+- 边是 `(父, 子)` 元组，和变量、取值域一起交给 `bn.constructEmptyBayesNet(...)`（`inference.py:73`）。
 
 | 变量 | 取值域 |
 |---|---|
@@ -223,7 +224,7 @@ wet 为 `0.08 + 0.14 = 0.22`，dry 为 `0.72 + 0.06 = 0.78`。
 
 ### Q4 — Variable Elimination（`inference.py` → `inferenceByVariableElimination`；本地 2 分）
 
-用"join 一个变量、立刻消去它"的方式算 `P(queryVariables | evidenceDict)`。同文件里的 `inferenceByEnumeration`（`inference.py:71-120`）
+用"join 一个变量、立刻消去它"的方式算 `P(queryVariables | evidenceDict)`。同文件里的 `inferenceByEnumeration`（`inference.py:77-126`）
 是参考写法，但它先把所有因子合成一张完整的联合分布表再消元，表太大。变量消元则按 `eliminationOrder` 交替进行 join 和 eliminate。
 
 **骨架**（标了 `# this is for autograding -- don't modify` 的两行不要改）：
@@ -240,7 +241,7 @@ return normalize(joinFactors(currentFactorsList))
 ```
 
 丢弃的理由：对单个变量求和的结果恒为 1（例如 `Σ_T P(T | W=sun) = 1`），乘不乘都不影响答案；
-而对只剩一个非条件变量的因子调用 `eliminate` 会直接抛 `ValueError`（`factorOperations.py:148-153` 的类型检查）。
+而对只剩一个非条件变量的因子调用 `eliminate` 会直接抛 `ValueError`（`factorOperations.py:166-171` 的类型检查）。
 
 **手算用例 `1-disconnected-eliminate`**（网络 `W → D`、`W → T`；查询 `D`；证据 `W = sun`；消元顺序 `[T]`）：
 1. 初始因子：`P(D | W=sun)`、`P(W=sun)`、`P(T | W=sun)`。
@@ -265,7 +266,7 @@ return normalize(joinFactors(currentFactorsList))
 
 **易错**：
 - 顺序里的每个变量都要调用一次 `joinFactorsByVariable`，即使随后要丢弃；也不能多调用。
-  `joinFactorsByVariable` 和 `eliminate` 每被调用一次就往 `callTrackingList` 里记一条（`factorOperations.py:37-38`、`:137-138`），
+  `joinFactorsByVariable` 和 `eliminate` 每被调用一次就往 `callTrackingList` 里记一条（`factorOperations.py:37-38`、`:155-156`），
   所以最后合并剩余因子要用不带记录的 `joinFactors`。
 - "只剩 1 个非条件变量"要数 join 之后的那个因子。证据变量在 `normalize` 之前仍算非条件变量（只是取值域被裁成一个值），
   所以 `P(T | W=sun)` 是 1 个，不是 2 个。
@@ -294,30 +295,20 @@ python autograder.py                                      # 全部四题
 - 必须在 `bayesnets/` 下运行。autograder 用相对路径找 `factorOperations.py`、`inference.py` 和 `test_cases/`，
   在仓库根目录运行会报 `FileNotFoundError: [Errno 2] No such file or directory: 'factorOperations.py'`。
 
-**当前状态**（四个函数尚未实现）的真实输出：
+四题全部完成后，`python autograder.py` 的真实输出（2026-11-24 实测，21 个用例全部 PASS）：
 
 ```
 Question q1
 ===========
-*** Method not implemented: constructBayesNet at line 64 of inference.py
-*** FAIL: Terminated with a string exception.
+*** PASS: test_cases/q1/1-small-board.test
+*** PASS: test_cases/q1/2-long-bottom.test
+*** PASS: test_cases/q1/3-wide-inverted.test
 
-### Question q1: 0/2 ###
-…（q2、q3、q4 同理）…
+### Question q1: 2/2 ###
+…（q2、q3、q4 同理；它们的每个 PASS 下面还多一行 Executed FactorEqualityTest）…
 
 Provisional grades
 ==================
-Question q1: 0/2
-Question q2: 0/3
-Question q3: 0/2
-Question q4: 0/2
-------------------
-Total: 0/9
-```
-
-四题全部完成后，计分栏应为下面这样（预期值，尚未实测）：
-
-```
 Question q1: 2/2
 Question q2: 3/3
 Question q3: 2/2
@@ -325,6 +316,8 @@ Question q4: 2/2
 ------------------
 Total: 9/9
 ```
+
+函数还没实现时，对应题目会打印 `*** Method not implemented: ...`，该题计 0 分。
 
 测试没过时，autograder 会把差异打印出来：
 
